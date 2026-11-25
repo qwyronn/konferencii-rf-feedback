@@ -1,4 +1,42 @@
 <script setup>
+import { ref } from 'vue'
+import FeedbackModal from './components/FeedbackModal.vue'
+import ToastNotification from './components/ToastNotification.vue'
+
+const STORAGE_KEY = 'feedback-list'
+
+function loadFeedbackList() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []
+  } catch {
+    return []
+  }
+}
+
+const showModal = ref(false)
+const showToast = ref(false)
+const feedbackSent = ref(localStorage.getItem(STORAGE_KEY) !== null)
+
+function openModal() {
+  showModal.value = true
+}
+
+function closeModal() {
+  showModal.value = false
+}
+
+function submitFeedback(review) {
+  const list = loadFeedbackList()
+  list.push({
+    rating: review.rating,
+    comment: review.comment,
+    date: new Date().toLocaleDateString('ru-RU'),
+  })
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(list))
+  showModal.value = false
+  feedbackSent.value = true
+  showToast.value = true
+}
 </script>
 
 <template>
@@ -45,7 +83,17 @@
           </tbody>
         </table>
       </section>
+
+      <section class="card feedback">
+        <button v-if="!feedbackSent" class="btn" @click="openModal">
+          Оставить отзыв
+        </button>
+        <p v-else class="sent-text">Ваш отзыв отправлен</p>
+      </section>
     </main>
+
+    <FeedbackModal v-if="showModal" @close="closeModal" @submit="submitFeedback" />
+    <ToastNotification v-if="showToast" @hide="showToast = false" />
   </div>
 </template>
 
@@ -116,6 +164,31 @@
   background: #eef1f5;
 }
 
+.feedback {
+  text-align: center;
+}
+
+.btn {
+  padding: 12px 24px;
+  font-size: 16px;
+  font-family: Arial, Helvetica, sans-serif;
+  color: #ffffff;
+  background: #2f6fde;
+  border: 1px solid #2f6fde;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background: #275fc0;
+}
+
+.sent-text {
+  margin: 0;
+  font-size: 16px;
+  color: #2e7d32;
+}
+
 @media (max-width: 480px) {
   .page {
     padding: 12px;
@@ -129,6 +202,11 @@
   .requests td {
     padding: 10px 8px;
     font-size: 13px;
+  }
+
+  .btn {
+    padding: 14px 28px;
+    font-size: 17px;
   }
 }
 </style>
